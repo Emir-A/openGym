@@ -113,6 +113,7 @@ const ProgrammeEdit = lazyView(() => import('./views/Programmes.jsx').then(m => 
 const Stats = lazyView(() => import('./views/Stats.jsx'))
 const Lifts = lazyView(() => import('./hevier/views/Lifts.jsx'))
 const History = lazyView(() => import('./views/History.jsx'))
+const HevierHistory = lazyView(() => import('./hevier/views/History.jsx'))
 const Library = lazyView(() => import('./views/Library.jsx'))
 const Muscles = lazyView(() => import('./views/Muscles.jsx'))
 // The community library of the server (views/Community.jsx): only with LIBRARY=on and the module on.
@@ -409,6 +410,7 @@ function Shell() {
       <Route path="/stats" element={<Stats />} />
       <Route path="/lifts" element={<Lifts />} />
       <Route path="/history" element={<History />} />
+      <Route path="/history-tab" element={<HevierHistory />} />
       <Route path="/library" element={<Library />} />
       <Route path="/muscles" element={<Muscles />} />
       {isOn(S, 'community') && <Route path="/community" element={<Community />} />}

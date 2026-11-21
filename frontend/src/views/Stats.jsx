@@ -961,7 +961,10 @@ export default function Stats() {
     {workouts.length > 0 && <>
       <div className="row between stats-list-h">
         <h4 className="sec" style={{ margin: 0 }}>{t('Recent workouts')}</h4>
-        <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={() => nav('/history')}>{t('All')} {workouts.length}</Button>
+        <div className="row" style={{ gap: 4 }}>
+          <Button size="sm" variant="ghost" onClick={() => nav('/history-tab')}>{t('Feed')}</Button>
+          <Button size="sm" variant="ghost" trailingIcon="chevronRight" onClick={() => nav('/history')}>{t('All')} {workouts.length}</Button>
+        </div>
       </div>
       <div className="list">{recent.map(w => <WorkoutRow key={w.id} w={w} onClick={() => workoutDetailSheet(w)} />)}</div>
     </>}

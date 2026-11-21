@@ -87,3 +87,57 @@ h2.sec.hv-lifts-gh { display: flex; flex-wrap: wrap; align-items: baseline; colu
 .hv-lifts-none { margin-top: 12px; }
 .hv-lifts-ends { display: flex; flex-direction: column; align-items: flex-start; margin-top: 8px; }
 .hv-lifts-link { display: inline-flex; align-items: center; gap: 2px; min-height: 48px; font-size: 14px; font-weight: 700; }
+
+/* ---------- History (/history-tab) & WorkoutCard ---------- */
+.hv-htiles { display: flex; gap: 8px; }
+.hv-htile { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 10px 12px; border-radius: var(--r); background: var(--surface); font-size: 12px; color: var(--label-2); }
+.hv-htile b { font-size: 20px; font-weight: 800; color: var(--label); white-space: nowrap; }
+.hv-htile .hv-pr { display: inline-flex; align-items: center; gap: 3px; }
+.hv-hgroup { margin-top: 12px; }
+.hv-hgroup:not(:has(+ .hv-hgroup)) { margin-bottom: 12px; }
+.hv-chips.hv-hlinks { flex-wrap: wrap; margin-top: 6px; }
+.hv-hlinks .hv-chip { flex: none; display: inline-flex; align-items: center; min-height: 48px; padding: 0 16px; font-size: 14px; white-space: nowrap; }
+.hv-hlinks .hv-chip::after { content: none; }
+.hv-phase-filter { margin: 0 0 10px; }
+.hv-moreb { width: 100%; margin-bottom: 12px; }
+
+.hv-wcard { cursor: pointer; display: flex; flex-direction: column; margin: 0 0 12px; border-radius: var(--r-card); padding: 14px 16px 12px; background: var(--surface); box-shadow: var(--hv-card-line); }
+.hv-wcard:active { background: var(--surface-2); }
+.hv-wcard-h { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: -2px -6px 10px 0; }
+.hv-avatar { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-3); color: var(--hv-acc-ink); font-size: 17px; font-weight: 600; }
+.hv-wcard-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hv-wcard-who b { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hv-wcard-d { font-size: 13px; color: var(--label-2); margin-bottom: 8px; }
+.hv-wcard-who .hv-wcard-d { font-size: 12px; margin: 0; }
+.hv-wcard-t { font-size: 17px; font-weight: 700; min-width: 0; margin-bottom: 8px; text-align: start; }
+button.hv-wcard-t { display: block; width: 100%; background: none; border: 0; color: inherit; font-family: inherit; line-height: inherit; padding: 0; }
+.hv-wcard-tags { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: -4px 0 8px; font-size: 13px; color: var(--label-2); }
+.hv-wd-gym { display: inline-flex; align-items: center; gap: 4px; }
+.hv-wd-gym .icn { font-size: 14px; }
+.hv-wcard-note { margin: -4px 0 8px; font-size: 14px; white-space: pre-wrap; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.hv-wcard-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.hv-wcard-stats div { display: flex; flex-direction: column; gap: 2px; }
+.hv-wcard-stats span { font-size: 11px; color: var(--label-2); }
+.hv-wcard-stats b { font-size: 15px; font-weight: 400; }
+.hv-wcard-hr { display: inline-flex; align-items: center; gap: 3px; }
+.hv-wcard-hr .icn { color: var(--red); font-size: 13px; }
+.hv-mline { margin-top: 8px; font-size: 13px; color: var(--label-2); line-height: 1.5; }
+.hv-mline b { color: var(--label); font-weight: 500; font-variant-numeric: tabular-nums; }
+.hv-wcard-lh { font-size: 13px; color: var(--label-2); border-top: .5px solid var(--sep); margin-top: 8px; padding: 10px 0 4px; }
+.hv-wcard-ex { display: flex; align-items: center; gap: 12px; font-size: 15px; padding: 4px 0; }
+.hv-wcard-ex .grow { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hv-wcard-ex b { font-weight: 400; }
+.hv-wcard .hv-thumb.sm, .hv-wcard .hv-thumb.sm img { width: 40px; height: 40px; }
+.hv-wcard-more { font-size: 13px; color: var(--label-2); text-align: center; padding-top: 6px; }
+
+/* ---------- Share Sheet ---------- */
+.hv-share-strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -16px; }
+.hv-share-strip::-webkit-scrollbar { display: none; }
+.hv-share-card { flex: 0 0 100%; scroll-snap-align: center; padding: 0 16px; box-sizing: border-box; }
+.hv-share-card img, .hv-share-card .share-card-ph { display: block; aspect-ratio: 4/5; max-height: 52vh; width: auto; max-width: 100%; margin: 0 auto; border-radius: 16px; object-fit: contain; box-shadow: 0 0 0 1px var(--sep); }
+.hv-share-dots { display: flex; justify-content: center; gap: 6px; margin: 10px 0 14px; }
+.hv-share-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--label-3); }
+.hv-share-dots span.on { background: var(--acc); }
+.hv-share-change { display: block; margin: 8px auto 0; background: none; border: 0; color: var(--hv-acc-ink); font: inherit; font-size: 14px; }
+.hv-share-acts { display: flex; gap: 10px; margin-top: 14px; }
+.hv-share-acts .btn { flex: 1; }
