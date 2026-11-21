@@ -23,5 +23,7 @@ final class HevierPlugins {
         activity.registerFlavorPlugin(HevierMediaPlugin.class);
         // Hevy's login screen, the session the export to Hevy sends workouts with (D138).
         activity.registerFlavorPlugin(HevierHevyLoginPlugin.class);
+        // Phone-only sleep estimation from screen on/off & unlock UsageEvents.
+        activity.registerFlavorPlugin(HevierSleepPlugin.class);
     }
 }

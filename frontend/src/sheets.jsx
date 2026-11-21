@@ -139,6 +139,7 @@ import { DAY_NOTE_TAGS, DAY_NOTE_LABEL, DAY_NOTE_ICON, dayNoteOf, dayNoteLine, c
 import { isOn } from './lib/modules.js'
 import { checkinMode, withForm, readForm, goLighter, canGoLighter, LIGHTER_KINDS } from './lib/daily-form.js'
 import { sleepHoursOn } from './lib/vitals.js'
+import { loadSleepEstimate, mergeEstimatedIntoVitals } from './hevier/lib/sleep-estimate-run.js'
 import DailyCheckin from './components/DailyCheckin.jsx'
 
 const S = () => useStore.getState().S
@@ -4045,9 +4046,14 @@ function dailyCheckinSheet(routineIds, opts) {
   // Which ways of going lighter this session can take, worked out on the entries it will start with.
   const preview = { entries: buildCombinedEntries(st, routineIds).entries }
   const lighter = LIGHTER_KINDS.filter(k => canGoLighter(preview, k))
-  // Last night's sleep from the phone's health store, when its vitals are read (lib/vitals.js).
-  const sleep = MOBILE ? Promise.all([loadHealth(), nativePlatform()])
-    .then(([h, platform]) => (h?.readVitals ? { hours: sleepHoursOn(h.vitals, today), platform } : null)).catch(() => null) : null
+  // Last night's sleep from the phone's health store, or phone-only usage estimate when absent.
+  const sleep = MOBILE ? Promise.all([loadHealth(), nativePlatform(), loadSleepEstimate().catch(() => null)])
+    .then(([h, platform, est]) => {
+      const hcHours = h?.readVitals ? sleepHoursOn(h.vitals, today) : null
+      if (hcHours > 0) return { hours: hcHours, platform }
+      const estHours = sleepHoursOn(mergeEstimatedIntoVitals(null, est), today)
+      return estHours > 0 ? { hours: estHours, platform: 'estimated' } : null
+    }).catch(() => null) : null
   const go = more => startFlow(routineIds, { ...opts, checked: true, ...more })
   ui().openSheet(close => <DailyCheckin lighter={lighter} sleep={sleep}
     onDone={({ form, lighter: kind }) => {

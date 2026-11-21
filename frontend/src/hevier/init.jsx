@@ -16,10 +16,12 @@ import { initHrStrap } from './lib/hr-strap-run.js'
 import { initMonthWidget } from './lib/month-widget.js'
 import { initUpdateNotice } from './components/UpdateNotice.jsx'
 import { initMediaPack } from './lib/media-pack-run.js'
+import { initSleepEstimate } from './lib/sleep-estimate-run.js'
 import { askMedia } from './components/MediaSection.jsx'
 import { partOn } from './lib/module-parts.js'
 import HevyExportSection from './components/HevyExportSection.jsx'
 import StrapSection from './components/StrapSection.jsx'
+import SleepEstimateSection from './components/SleepEstimateSection.jsx'
 
 const store = storeAdapter(useStore, (msg, opts) => useUI.getState().toast(msg, opts))
 const state = () => useStore.getState().S
@@ -30,8 +32,11 @@ function install() {
   hooks.hevyFolders = { fetch: importHevyFolders, merged: applyHevyFolders }
   hooks.hevyMore = { ...hevyMore, Rows: HevyMoreRows, toast: moreToast }
   hooks.integrationsAfter = cat => (
-    cat === 'health' && MOBILE && partOn(state(), 'health', 'strap')
-      ? <StrapSection key="hv-hr-strap" />
+    cat === 'health' && MOBILE
+      ? <>
+          {partOn(state(), 'health', 'strap') && <StrapSection key="hv-hr-strap" />}
+          <SleepEstimateSection key="hv-sleep-est" />
+        </>
       : cat === 'training' && partOn(state(), 'integrations', 'hevy')
         ? <HevyExportSection key="hv-hevy-export" />
         : null
@@ -42,6 +47,7 @@ function install() {
   initMonthWidget(store, () => { import('../sheets.jsx').then(m => m.calendarSheet()).catch(() => {}) }, todayISO)
   initUpdateNotice(store)
   initMediaPack(store, askMedia)
+  initSleepEstimate()
 }
 
 install()

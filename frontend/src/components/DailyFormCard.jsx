@@ -8,6 +8,7 @@ import { t, tn } from '../lib/i18n.js'
 import { fmtNum, todayISO } from '../lib/format.js'
 import { MOBILE, nativePlatform } from '../lib/mobile.js'
 import { loadHealth, onHealthChange } from '../lib/health-sync.js'
+import { loadSleepEstimate, onSleepEstimateChange, mergeEstimatedIntoVitals } from '../hevier/lib/sleep-estimate-run.js'
 import { vitalsSummary } from '../lib/vitals.js'
 import { formDays, formScore, offerCheckin } from '../lib/daily-form.js'
 import { useStore } from '../store/useStore.js'
@@ -62,20 +63,25 @@ export function cachedPerformance(S) {
 
 export default function DailyFormCard({ S }) {
   const [h, setH] = useState(null)
+  const [est, setEst] = useState(null)
   const [platform, setPlatform] = useState(null)
   useEffect(() => {
     if (!MOBILE) return
     let gone = false
     loadHealth().then(f => { if (!gone) setH(f) }).catch(() => {})
+    loadSleepEstimate().then(f => { if (!gone) setEst(f) }).catch(() => {})
     nativePlatform().then(p => { if (!gone) setPlatform(p) }).catch(() => {})
     const off = onHealthChange(f => { if (!gone) setH(f) })
-    return () => { gone = true; off() }
+    const offEst = onSleepEstimateChange(f => { if (!gone) setEst(f) })
+    return () => { gone = true; off(); offEst() }
   }, [])
-  const vitals = h?.readVitals ? h.vitals : null
+  const vitals = useMemo(() => mergeEstimatedIntoVitals(h?.readVitals ? h.vitals : null, est), [h, est])
   const today = todayISO()
   const days = formDays(S)
   const vs = vitals ? vitalsSummary(vitals, today) : null
   const anyVital = vs && Object.values(vs).some(Boolean)
+  const sleepEstimated = !!(vs?.sleep && vitals?.days?.[vs.sleep.d]?.sleepSource === 'estimated')
+  const hasRealVitals = !!(vs && (vs.rhr || vs.hrv || vs.steps || (vs.sleep && !sleepEstimated)))
   const offer = offerCheckin(S)
   // The comparison reads every workout (about 120 ms over 2,000 of them), so only for the card that
   // shows it: not for the one-time offer, not when the card is not there at all.
@@ -117,7 +123,11 @@ export default function DailyFormCard({ S }) {
         {vs.hrv && <Vital label={vitals.hrvKind === 'sdnn' ? t('HRV (SDNN)') : t('HRV (RMSSD)')} value={fmtNum(vs.hrv.v)} unit="ms" usual={usual(vs.hrv.usual, v => fmtNum(v))} />}
         {vs.steps && <Vital label={vs.steps.d === today ? t('Steps today') : t('Steps')} value={fmtNum(vs.steps.v)} usual={usual(vs.steps.usual, v => fmtNum(v))} />}
       </div>
-      <div className="small dim dfc-src">{platform === 'ios' ? t('From Apple Health, read-only, on this phone only.') : t('From Health Connect, read-only, on this phone only.')}</div>
+      <div className="small dim dfc-src">{sleepEstimated && !hasRealVitals
+        ? t('Estimated from phone usage, on this phone only.')
+        : sleepEstimated && hasRealVitals
+          ? (platform === 'ios' ? t('From Apple Health (sleep estimated from phone usage), on this phone only.') : t('From Health Connect (sleep estimated from phone usage), on this phone only.'))
+          : (platform === 'ios' ? t('From Apple Health, read-only, on this phone only.') : t('From Health Connect, read-only, on this phone only.'))}</div>
     </>}
     {shown.length > 0 && <div className="dfc-ins" data-insights>
       {shown.map(x => { const w = insightWords(x, S); return <div className="dfc-in" key={x.factor + x.metric}>

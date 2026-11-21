@@ -63,7 +63,9 @@ export default function DailyCheckin({ lighter = [], sleep = null, onDone, onSki
     {FORM_KEYS.map(k => <div key={k}>
       <Scale k={k} value={f[k]} onChange={set(k)} />
       {k === 'sleep' && hours > 0 && <div className="small dim dfc-hint">
-        {t('{0} last night, from {1}', min ? t('{0} h {1} min', fmtNum(h), fmtNum(min)) : t('{0} h', fmtNum(h)), source === 'ios' ? t('Apple Health') : t('Health Connect'))}
+        {source === 'estimated'
+          ? t('{0} last night, estimated from phone usage', min ? t('{0} h {1} min', fmtNum(h), fmtNum(min)) : t('{0} h', fmtNum(h)))
+          : t('{0} last night, from {1}', min ? t('{0} h {1} min', fmtNum(h), fmtNum(min)) : t('{0} h', fmtNum(h)), source === 'ios' ? t('Apple Health') : t('Health Connect'))}
       </div>}
     </div>)}
     {rough && <div className="dfc-light" role="group" aria-label={t('Take it easier today?')}>
