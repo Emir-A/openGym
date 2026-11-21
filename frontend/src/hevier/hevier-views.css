@@ -45,6 +45,8 @@
 
 /* ---------- Lifts (/lifts) ---------- */
 .hv-lifts .picker-search { position: static; background: none; padding-bottom: 0; }
+.hv-lifts.hv-lifts-embed { padding: 14px; }
+.hv-lifts.hv-lifts-embed .picker-search { padding: 0 0 8px; }
 .hv-lifts-ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .hv-lifts-ctl > .seg { flex: 1 1 0; min-width: fit-content; }
 :is(.hv-lifts-by, .hv-lifts-win) button { min-height: 48px; }

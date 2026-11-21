@@ -15,7 +15,7 @@ import { isBw } from '../../lib/history.js'
 import { todayISO } from '../../lib/format.js'
 import { fmtDate, fmtDaysAgo } from '../lib/dates.js'
 import { speedUnitOf } from '../../lib/speed.js'
-import { exerciseDetailSheet } from '../../sheets.jsx'
+import * as sheets from '../../sheets.jsx'
 import { Segmented } from '../../components/ui.jsx'
 import { Thumb } from '../../components/Media.jsx'
 import Icon from '../../components/Icon.jsx'
@@ -83,7 +83,7 @@ function LiftChart({ lines, tones }) {
   </svg>
 }
 
-function LiftRow({ r, S, today, p, win, half }) {
+function LiftRow({ r, S, today, p, win, half, onPick }) {
   const ex = exOr(r.id)
   const muscle = mainMuscleOf(ex)
   const unit = exUnitOf(S, r.id)
@@ -123,7 +123,7 @@ function LiftRow({ r, S, today, p, win, half }) {
     r.newBest ? t('New best') : r.best && t('best {0}', spoken(text(r.best))),
     half && t('isolation, counts half in its group'),
   ].filter(Boolean).join(', ')
-  return <button type="button" className="item hv-lift" aria-label={label} onClick={() => exerciseDetailSheet(ex)}>
+  return <button type="button" className="item hv-lift" aria-label={label} onClick={() => { onPick?.(r.id); sheets.exerciseDetailSheet?.(ex) }}>
     <span className="hv-thumb"><Thumb ex={ex} /></span>
     <span className="grow">
       <span className="hv-lift-hd">
@@ -176,8 +176,9 @@ function weeksText(days) {
   return days === 1 ? t('1 day') : t('{0} days', days)
 }
 
-export default function Lifts() {
+export default function Lifts({ embed = false, onPick } = {}) {
   const nav = useNavigate()
+  const back = useBack('/stats')
   const S = useStore(s => s.S)
   const update = useStore(s => s.update)
   const [q, setQ] = useState('')
@@ -202,18 +203,18 @@ export default function Lifts() {
   // How to filter shows until the first tap on a total (S.hvLiftsTapSeen); what ½ means always shows under By muscle.
   const hint = [filter ? t(SHOWING[filter]) : !S.hvLiftsTapSeen && t('Tap a total to show only those lifts'),
     by === 'muscle' && t('½ counts half in its group')].filter(Boolean).join(' · ')
-  const ends = [
+  const ends = embed ? [] : [
     partOn(S, 'hvStats', 'levels') && isOn(S, 'strength') && ['Strength levels', '/stats?section=lifts'],
   ].filter(Boolean)
-  return <div className="narrow hv-lifts">
-    <PageBar title={t('Lifts')} onBack={useBack('/stats')} backLabel={t('Stats')}><SettingsGear /></PageBar>
+  return <div className={embed ? 'card hv-lifts hv-lifts-embed' : 'narrow hv-lifts'}>
+    {!embed && <PageBar title={t('Lifts')} onBack={back} backLabel={t('Stats')}><SettingsGear /></PageBar>}
     <div className="picker-search"><div className="search-row"><div className={'search' + (q ? ' has-clear' : '')}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
       <input className="input" placeholder={t('Search exercises')} aria-label={t('Search exercises')} value={q} onChange={e => setQ(e.target.value)} />
       {q && <button type="button" className="clear" onClick={() => setQ('')} aria-label={t('Clear')}><Icon name="xmark" /></button>}</div></div></div>
     <div className="hv-lifts-ctl">
-      <Segmented className="hv-lifts-by" value={by} onChange={v => update(s => { s.hvLiftsBy = v })}
+      <Segmented className="hv-lifts-by" value={by} onChange={v => update?.(s => { s.hvLiftsBy = v })}
         options={[{ value: 'recent', label: t('Recent') }, { value: 'muscle', label: t('By muscle') }]} />
-      {rows.length > 0 && <Segmented className="hv-lifts-win" value={win} onChange={v => update(s => { s.hvLiftsWindow = v })}
+      {rows.length > 0 && <Segmented className="hv-lifts-win" value={win} onChange={v => update?.(s => { s.hvLiftsWindow = v })}
         options={[{ value: '12w', label: t('12 weeks') }, phase && { value: 'phase', label: t('Phase') }, { value: 'all', label: t('All') }].filter(Boolean)} />}
     </div>
     {rows.length > 0 && <>
@@ -221,7 +222,7 @@ export default function Lifts() {
         {t('{0} since {1}', t(PHASE_LABEL[phase.phase]), fmtDate(phase.since))} · {weeksText(dayNo(today) - dayNo(phase.since))}
       </div>}
       <div className="hv-lifts-totals">{STATES.map(st => <button key={st} type="button" className={'hv-lifts-total ' + st + (filter === st ? ' on' : '')}
-        aria-pressed={filter === st} onClick={() => { setFilter(f => (f === st ? null : st)); if (!S.hvLiftsTapSeen) update(s => { s.hvLiftsTapSeen = true }) }}
+        aria-pressed={filter === st} onClick={() => { setFilter(f => (f === st ? null : st)); if (!S.hvLiftsTapSeen) update?.(s => { s.hvLiftsTapSeen = true }) }}
         aria-label={(totals[st] === 1 ? t('{0}, 1 lift', t(WORD[st])) : t('{0}, {1} lifts', t(WORD[st]), totals[st])) + (filter === st ? ', ' + t('filter on') : '')}>
         <b>{totals[st]}</b><small>{t(WORD[st])}</small>
       </button>)}</div>
@@ -230,7 +231,7 @@ export default function Lifts() {
     {sections.map(sec => <section key={sec.key}>
       {by === 'muscle' ? <GroupHead label={muscleText(sec.label)} ids={sec.ids} progress={progress} /> : <h2 className="sec">{t(sec.label)}</h2>}
       <div className="list hv-flat">{sec.rows.map(r => <LiftRow key={r.id} r={r} S={S} today={today} p={progress.get(r.id)} win={win}
-        half={by === 'muscle' && !isCompound(exOr(r.id))} />)}</div>
+        half={by === 'muscle' && !isCompound(exOr(r.id))} onPick={onPick} />)}</div>
     </section>)}
     {!rows.length && <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{t('No exercises trained yet. They show here after your first workout.')}</div>}
     {rows.length > 0 && !sections.length && q.trim() && <div className="muted small hv-lifts-none">{t('No exercise you trained matches “{0}”.', q.trim())}</div>}

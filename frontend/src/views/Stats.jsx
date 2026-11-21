@@ -55,6 +55,7 @@ import { exView, exUnitOf, shownWeight } from '../lib/ex-unit.js'
 import { isOn } from '../lib/modules.js'
 import { activityStimuli } from '../lib/activities.js'
 import { isoRun } from '../lib/bidi.js'
+import Lifts from '../hevier/views/Lifts.jsx'
 
 // Set 1 to 5 on the per-set chart — system colours, so each line keeps its hue in dark mode.
 const SET_COLORS = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--pink)']
@@ -997,6 +998,7 @@ export default function Stats() {
 
     <section className="stats-sect" id="stats-lifts" data-stats-sect="lifts" aria-labelledby="stats-h-lifts">
       <h2 className="stats-sect-h" id="stats-h-lifts">{t('Lifts')}</h2>
+    <Lifts embed onPick={setExId} />
     <div className="card" data-tour="stats-records">
       <SeasonDeco spot="stats-peek" />
       <h2>{t('Exercise progress')}</h2>
