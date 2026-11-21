@@ -10,6 +10,9 @@ import { uid } from './format.js'
 import { isWarmupRow } from './workout-model.js'
 import { HEVY_ID_MAP, HEVY_TITLE_MAP } from './hevy-id-map.js'
 import { daysBetween, importId, priorCustom, roundWeight } from './import-csv.js'
+// [hevier] S19: the fork's step in a Hevy import (hevier/DECISIONS.md D29)
+import { hooks } from '../hevier/hooks.js'
+// [/hevier]
 import { NOTE_MAX } from './history.js'
 import { pickFor, nameKey, inRange } from './import-choices.js'
 
@@ -180,11 +183,17 @@ function makeResolver(templates, customEx, matches) {
     const ownId = importId('im', 'Hevy|' + key)
     const own = priorCustom(customEx, ownId, t?.title || fallbackTitle)
     const pinned = templateId && canonicalExId(HEVY_ID_MAP[templateId])
-    const auto = own ? own.id : pinned && EXIDX[pinned] ? pinned : null
+    // [hevier] S19: the fork's match comes before an earlier import's own and the table's; the pick below still wins
+    const hv = hooks.importExercise && hooks.importExercise(title, 'Hevy')
+    const auto = hv || (own ? own.id : pinned && EXIDX[pinned] ? pinned : null)
+    // [/hevier]
     // Your pick on the summary (lib/import-choices.js) beats the table; "keep it as your own"
     // still finds the one an earlier import made.
     const pick = pickFor(matches, title, customEx)
-    const id = pick === undefined ? auto : pick === null ? (own ? own.id : null) : pick
+    // [hevier] S19: a pick keeps the title's brand, cable setup and sides, the fork's answer for it
+    const picked = pick !== undefined && hooks.importExercise ? hooks.importExercise(title, 'Hevy', pick) : null
+    const id = picked || (pick === undefined ? auto : pick === null ? (own ? own.id : null) : pick)
+    // [/hevier]
     if (!names.has(key) && title) names.set(key, { key: nameKey(title), name: title, id: id || ownId, auto: auto || ownId })
     if (id) {
       if (EXIDX[id] && !EXIDX[id].custom) matchedIds.add(id)
@@ -279,6 +288,9 @@ export function parseHevyWorkouts(workouts, templates, { unit = 'kg', customEx =
     const desc = noteOf(w.description)
     if (desc) notesSeen++
     if (desc && keepNotes && !day.note) day.note = desc
+    // [hevier] S21: the workout's routine, for the fork (D31)
+    if (hooks.hevyMore) hooks.hevyMore.day(day, w)
+    // [/hevier]
     // Past midnight the end's clock restarts; count it from the start day's midnight instead.
     if (end?.t != null) day.end = end.t + daysBetween(start.d, end.d) * 86400000
 
@@ -362,6 +374,9 @@ export function parseHevyWorkouts(workouts, templates, { unit = 'kg', customEx =
     }
     // Work sets only, the number `workoutVolume` gives a workout finished in the app; it is stored for good.
     workout.vol = entries.reduce((a, e) => a + e.sets.reduce((b, s) => b + (isWarmupRow(s) ? 0 : (s.w || 0) * (s.r || 0)), 0), 0)
+    // [hevier] S21: the Hevy routine (D31)
+    if (hooks.hevyMore) hooks.hevyMore.workout(workout, day)
+    // [/hevier]
     return workout
   })
   const used = new Set(outWorkouts.flatMap(w => w.entries.map(e => e.id)))
@@ -471,6 +486,9 @@ export function parseHevyRoutines(routines, templates, { unit = 'kg', customEx =
       hevyId: r.id || null,
       ex,
     })
+    // [hevier] S20: the routine's Hevy folder, for the fork (D30)
+    if (hooks.hevyFolders && r.folder_id != null) out[out.length - 1].hvFolderId = r.folder_id
+    // [/hevier]
   }
 
   const used = new Set(out.flatMap(r => r.ex.map(e => e.id)))
@@ -571,6 +589,9 @@ export function parseHevyAccount(raw, { unit = 'kg', customEx = [], ...choices }
     bodyweight: parseHevyBodyweight(bodyMeasurements, { unit }),
     templateCount: templates.length,
     raw,
+    // [hevier] S21: what the fork reads after the parse (D31)
+    ...(hooks.hevyMore ? { hvRaw: { templates, bodyMeasurements, workouts, routines } } : {}),
+    // [/hevier]
   }
 }
 

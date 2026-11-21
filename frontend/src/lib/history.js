@@ -32,6 +32,9 @@ import { isoRun, ltrRun } from './bidi.js'
 import { gymSplitView } from './gym-split.js'
 import { queueNext, pinState, queueLiveOn } from './queue.js'
 import { isPyramid, pyramidLabel, pyramidTargetAt, pyramidWeightAt, PYRAMID_MAX } from './pyramid.js'
+// [hevier] S48: the hook a set row of its own kind is read through
+import { hooks } from '../hevier/hooks.js'
+// [/hevier]
 
 // When a workout happened, as epoch ms: its own recorded start, else noon on its calendar day.
 // Noon rather than midnight because `new Date('2026-09-22')` parses as UTC midnight, which any
@@ -176,6 +179,9 @@ function setLabelText(id, s, cfg, speedUnit) {
   if (!EXPLICIT_MODES.has(cfg?.mode) && mode !== 'reps' && s.r > 0 && !(s.min > 0 || s.speed > 0 || s.sec > 0)) mode = 'reps'
   // A set logged in metres reads as one even where the target says nothing of it.
   if (!EXPLICIT_MODES.has(cfg?.mode) && Number(s.m) > 0 && !(s.r > 0) && !(s.sec > 0)) mode = 'distance'
+  // [hevier] S48: a set of its own kind (a hold in a reps exercise, D89)
+  mode = hooks.setMode?.(s) || mode
+  // [/hevier]
   // A treadmill grade rides along when the set has one (lib/incline.js); a flat set reads as it did.
   // A set logged by its distance (#887, lib/distance.js) reads as the distance and the pace.
   if (mode === 'cardio' && Number(s.km) > 0) {

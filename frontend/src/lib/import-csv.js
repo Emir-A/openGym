@@ -33,6 +33,9 @@ import {
 } from './measurements.js'
 import { isWarmupRow, completedVolumeOf, syncSideAggregate } from './workout-model.js'
 import { HEVY_TITLE_MAP } from './hevy-id-map.js'
+// [hevier] S19: the fork's step in a Hevy import (hevier/DECISIONS.md D29)
+import { hooks } from '../hevier/hooks.js'
+// [/hevier]
 import { clampIncline, inclineFrom, clampLevel, levelFrom } from './incline.js'
 import { NOTE_MAX } from './history.js'
 import { pickFor, inRange } from './import-choices.js'
@@ -788,6 +791,9 @@ export function parseWorkoutRows(rows, map, source, { unit = 'kg', customEx = []
       }
       resolved.set(exact, id)
     }
+    // [hevier] S19: the fork's match first, per exact title (`key` is a word bag that drops "weighted"), told the pick
+    if (hooks.importExercise) id = hooks.importExercise(name, source, fileId ? undefined : pickFor(matches, name, customEx)) || id
+    // [/hevier]
     let st = stats.get(exact)
     if (!st) stats.set(exact, st = { name, sets: 0, sessions: new Set() })
     st.sets++
@@ -1229,6 +1235,9 @@ export function parseImport(text, opts) {
   const s = String(text)
   if (s.includes('HKQuantityTypeIdentifier') || /^\s*</.test(s)) return parseBodyweight(s, opts)
   const asWorkouts = parseWorkoutCSV(s, opts)
+  // [hevier] S19: the fork's keys back into ids, brands and per-side sets
+  if (!asWorkouts.error && hooks.importDone) return hooks.importDone(asWorkouts)
+  // [/hevier]
   if (!asWorkouts.error) return asWorkouts
   const asWeights = parseBodyweight(s, opts)
   return asWeights.error ? asWorkouts : asWeights

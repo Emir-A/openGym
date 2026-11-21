@@ -141,3 +141,8 @@ button.hv-wcard-t { display: block; width: 100%; background: none; border: 0; co
 .hv-share-change { display: block; margin: 8px auto 0; background: none; border: 0; color: var(--hv-acc-ink); font: inherit; font-size: 14px; }
 .hv-share-acts { display: flex; gap: 10px; margin-top: 14px; }
 .hv-share-acts .btn { flex: 1; }
+
+/* ---------- Hevy Export sheets ---------- */
+.hv-namesheet h3 { margin-bottom: 14px; }
+.hv-namesheet .input { width: 100%; margin-bottom: 14px; }
+.hv-namesheet .btn { width: 100%; }

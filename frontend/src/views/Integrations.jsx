@@ -24,6 +24,7 @@ import { useWebdavConfig, webdavSheet } from '../components/WebDavBackup.jsx'
 import { calendarSheet } from '../components/CalendarFeed.jsx'
 import { useNutritionLink, nutritionSheet } from '../components/SisterApps.jsx'
 import { getCalendar } from '../lib/api-tokens.js'
+import { hooks } from '../hevier/hooks.js' // [hevier] S57
 
 /* Settings → Integrations (v1.4.4): one directory of what openGym can talk to, grouped, each card
    with what it is, whether it is on, and the one thing to do next. The cards are thin on purpose:
@@ -206,6 +207,7 @@ export default function IntegrationsPage({ android = false, ios = false }) {
       {cat.id === 'health' && <WorksWith platform={platform} nav={nav} />}
       {/* openRunning has no app yet (docs/dev/SISTER_APPS.md): said once, no fake Connect button. */}
       {cat.id === 'sister' && <p className="sect-f intg-intro">{t('openRunning is on its way. Until it lands, runs and matches come in from Apple Health or Health Connect.')}</p>}
+      {hooks.integrationsAfter?.(cat.id)}{/* [hevier] S57 */}
     </div>)}
     {tokens && <Section footer={t('For AI assistants over MCP, planners and scripts. Each sees only what you tick.')}>
       <Row icon="key" iconTint="var(--purple)" title={t('API tokens')} accessory="chevron" onClick={() => nav('/settings/api-tokens')} />
