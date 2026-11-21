@@ -54,5 +54,6 @@ frontend/ios/App/WatchCore/.build/
 
 # Cloudflare fallback build (cloudflare/build.sh)
 /dist/
+/release/
 .wrangler/
 .taste-skill/

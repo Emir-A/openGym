@@ -14,7 +14,7 @@ import { MOBILE } from './mobile.js'
 import { APK_VARIANTS, APK_VARIANT } from './apk-variant.js'
 
 // [hevier] S6: fork builds check VITE_UPDATE_REPO, accepting vX.Y.Z or gohevier-vX.Y.Z tags
-const REPO = import.meta.env.VITE_UPDATE_REPO || 'DuarteSantos8/openGym'
+const REPO = import.meta.env.VITE_UPDATE_REPO || 'Emir-A/openGym'
 const tagVersion = tag => (/^gohevier-v/.test(tag || '') ? tag.slice('gohevier-v'.length) : String(tag || '').replace(/^v/, ''))
 const NO_CHECK = import.meta.env.VITE_HEVIER_DEBUG === '1'
 // [/hevier]
