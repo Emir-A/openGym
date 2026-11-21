@@ -49,6 +49,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TextScalePlugin.class);
         // Settings → Screen orientation (#821), before the first frame: no turn on the way in.
         OrientationPlugin.applySaved(this);
+        // [hevier] S17: additive native plugins (src/hevier/java/…/HevierPlugins.java)
+        HevierPlugins.register(this);
+        // [/hevier]
         super.onCreate(savedInstanceState);
         // After super: BridgeActivity swaps the splash theme for the app's own there, and the
         // overlay has to go on top of that one (AccentTheme.java, #980).

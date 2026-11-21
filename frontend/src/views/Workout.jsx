@@ -46,6 +46,7 @@ import { afterScrollRestore, scrollRestorePending } from '../components/Modals.j
 import { effortColor } from '../lib/effort.js'
 import Elapsed from '../components/Elapsed.jsx'
 import LiveHeartRate from '../components/LiveHeartRate.jsx'
+import StrapBpm from '../hevier/components/StrapBpm.jsx'
 import LiveCard from '../components/LiveCard.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
@@ -2722,7 +2723,7 @@ function ActiveWorkout() {
       {editing
         ? <button className="iconbtn" aria-label={t('Close editor')} title={t('Close editor')} onClick={() => exitWorkoutEdit()}><Icon name="xmark" /></button>
         : <button className="iconbtn" aria-label={t('Minimize')} title={t('Minimize')} onClick={() => nav('/home')}><Icon name="chevronDown" /></button>}
-      <div className="whdr-mid"><div className="whdr-name">{A.name}</div><div className="sub">{(A.backfill || editing) ? fmtDate(A.d, true) : <>{paused && <span className="whdr-paused">{t('Paused')} </span>}<Elapsed start={A.start} pausedAt={A.pausedAt} /></>} · {t('{0} sets', done + '/' + total)}{!(A.backfill || editing) && isOn(S, 'health') && <LiveHeartRate />}</div>{gymShown && (gymSwitchable
+      <div className="whdr-mid"><div className="whdr-name">{A.name}</div><div className="sub">{(A.backfill || editing) ? fmtDate(A.d, true) : <>{paused && <span className="whdr-paused">{t('Paused')} </span>}<Elapsed start={A.start} pausedAt={A.pausedAt} /></>} · {t('{0} sets', done + '/' + total)}{!(A.backfill || editing) && isOn(S, 'health') && <><LiveHeartRate /><StrapBpm /></>}</div>{gymShown && (gymSwitchable
         ? <button type="button" className="whdr-gym" onClick={openGymMenu} aria-label={t('Gym: {0}', gymShown)}><Icon name="house" />{gymShown}</button>
         : <span className="whdr-gym"><Icon name="house" />{gymShown}</span>)}</div>
       {!chipRow && sessionMap}

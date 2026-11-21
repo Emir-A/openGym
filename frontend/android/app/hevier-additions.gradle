@@ -1,0 +1,15 @@
+// Additive Android plugins, month widget resources, unit tests, and R8 shrinking rules
+// ported from openGym-Hevier while keeping openGym's existing features intact.
+android {
+    sourceSets {
+        main.res.srcDirs += ['src/hevier/res']
+        main.java.srcDirs += ['src/hevier/java']
+        test.java.srcDirs += ['src/hevier/test/java']
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro', 'src/hevier/proguard-rules.pro'
+        }
+    }
+}

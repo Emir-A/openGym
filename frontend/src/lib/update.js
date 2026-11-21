@@ -13,7 +13,11 @@ import { logRequest } from './net-log.js'
 import { MOBILE } from './mobile.js'
 import { APK_VARIANTS, APK_VARIANT } from './apk-variant.js'
 
-const REPO = 'DuarteSantos8/openGym'
+// [hevier] S6: fork builds check VITE_UPDATE_REPO, accepting vX.Y.Z or gohevier-vX.Y.Z tags
+const REPO = import.meta.env.VITE_UPDATE_REPO || 'DuarteSantos8/openGym'
+const tagVersion = tag => (/^gohevier-v/.test(tag || '') ? tag.slice('gohevier-v'.length) : String(tag || '').replace(/^v/, ''))
+const NO_CHECK = import.meta.env.VITE_HEVIER_DEBUG === '1'
+// [/hevier]
 const LATEST_URL = `https://api.github.com/repos/${REPO}/releases/latest`
 export const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`
 
@@ -57,12 +61,13 @@ export async function checkForUpdate() {
   return cached
 }
 async function fetchLatest() {
+  if (NO_CHECK) return { hasUpdate: false, latestVersion: __APP_VERSION__, apkUrl: null, hashUrl: null } // [hevier] S6
   const res = await fetch(LATEST_URL, { headers: { Accept: 'application/vnd.github+json' } })
   // 404: the repository has no published release yet
   if (res.status === 404) return { hasUpdate: false, latestVersion: __APP_VERSION__, apkUrl: null, hashUrl: null }
   if (!res.ok) throw new Error(`GitHub API ${res.status}`)
   const latest = await res.json()
-  const latestVersion = String(latest.tag_name || '').replace(/^v/, '')
+  const latestVersion = tagVersion(latest.tag_name) // [hevier] S6
   if (!latestVersion) return { hasUpdate: false, latestVersion: __APP_VERSION__, apkUrl: null, hashUrl: null }
   const hasUpdate = compareSemver(latestVersion, __APP_VERSION__) > 0
   const { apk, hash } = pickApk(latest.assets || [])

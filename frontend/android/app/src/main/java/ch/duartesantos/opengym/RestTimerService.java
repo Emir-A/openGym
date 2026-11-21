@@ -172,6 +172,8 @@ public class RestTimerService extends Service {
         }
         endsAt = 0;
         stopForegroundCompat();
+        Runnable gone = RestAlert.hevierRestGone; // [hevier] S51
+        if (gone != null) gone.run();
         alive = false;
         // The rest is over (or skipped): the workout card takes the notification back.
         WorkoutNotification.post(getApplicationContext());
@@ -319,6 +321,7 @@ public class RestTimerService extends Service {
             Notification n = card && Build.VERSION.SDK_INT >= 36
                     ? WorkoutNotification.rest(this, left, totalMs, paused, pauseLabel, resumeLabel, plusLabel, skipLabel)
                     : null;
+            n = RestAlert.hevierHeart(this, n); // [hevier] S51
             if (n == null) n = RestAlert.countdownNotification(
                     this, left, totalMs, paused, pauseLabel, resumeLabel, minusLabel, plusLabel, skipLabel, accent, ink,
                     card ? WorkoutNotification.upNext(this) : null);

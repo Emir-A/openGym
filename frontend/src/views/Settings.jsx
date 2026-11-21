@@ -45,6 +45,7 @@ import { bandsOf } from '../lib/bands.js'
 import { sampleCue } from '../lib/spoken-cues.js'
 import { muscleTargetsSheet } from '../components/WeeklySets.jsx'
 import { aboutYouSheet } from '../components/StrengthLevel.jsx'
+import { MediaSection } from '../hevier/components/MediaSection.jsx'
 import { api, webauthnOK, passkeyRegister, passkeyError, IS_ANDROID } from '../lib/api.js'
 import { pushSupported, enablePush, disablePush, sendTestPush, syncPushSubscription } from '../lib/push.js'
 import { wakeLockSupported } from '../lib/wakelock.js'
@@ -1303,6 +1304,7 @@ export default function Settings({ page = null, find = null, via = null, entryKe
       {MOBILE && <Section>
         <NetworkLogRow />
       </Section>}
+      <MediaSection key="hv-media" />
       {/* Tutorials (components/Tour.jsx): the tour from the top, and the four short guided runs
           its closing card offers. Not over a running workout: the tour's practice session and the
           tutorials' copies would have to stand in for the real one. */}

@@ -69,6 +69,15 @@ public final class RestAlert {
     static final int COUNTDOWN_ID = 41;
     static final int NOTIFICATION_ID = 42;
     static final String COUNTDOWN_CHANNEL_ID = "rest-countdown";
+    // [hevier] S51: the strap shares this card (D91): its bpm in the card's header, and word when the rest is gone
+    static volatile String hevierSubText;
+    static volatile Runnable hevierRestGone;
+    /** The workout card with the strap's line in its header (D110); the card as it is without a strap. */
+    static Notification hevierHeart(Context ctx, Notification n) {
+        String line = hevierSubText;
+        if (line == null || n == null || Build.VERSION.SDK_INT < 24) return n;
+        try { return Notification.Builder.recoverBuilder(ctx, n).setSubText(line).build(); } catch (Exception e) { return n; }
+    }
     private static final int FLAGS = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
     private static final int RATE = RestTone.RATE;
     private static final long[] VIBRATE = new long[] {0, 200, 100, 200, 100, 400};
@@ -692,6 +701,7 @@ public final class RestAlert {
                 .setColor(accent)
                 .setContentIntent(openApp(ctx))
                 .setLocalOnly(true);
+        if (hevierSubText != null) b.setSubText(hevierSubText); // [hevier] S51
         if (Build.VERSION.SDK_INT >= 24) {
             b.setCustomContentView(compact);
             b.setCustomBigContentView(expanded);

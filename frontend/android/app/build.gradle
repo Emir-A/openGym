@@ -178,3 +178,4 @@ tasks.configureEach { t ->
 if (rootProject.file('asset-packs.app.gradle').exists()) {
     apply from: rootProject.file('asset-packs.app.gradle')
 }
+apply from: 'hevier-additions.gradle'

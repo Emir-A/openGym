@@ -337,6 +337,30 @@
         <!-- Gym check-in scanner (@capacitor-mlkit/barcode-scanning): pre-fetch the ML Kit
              barcode model at install time so the first scan doesn't wait on a download. -->
         <meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />
+
+        <!-- [hevier] Month home-screen widget, BLE HR strap foreground service, and Hevy login -->
+        <receiver
+            android:name=".HevierMonthWidget"
+            android:exported="false"
+            android:label="@string/hevier_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hevier_widget_month_info" />
+        </receiver>
+        <service
+            android:name=".HevierHrStrapService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+        <activity
+            android:name=".HevierHevyLoginActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
     <!-- Permissions -->
@@ -363,6 +387,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     <!-- Delete my account on a paired phone: the phone's own face, fingerprint or screen lock
          confirms it is the owner first (DeviceAuthPlugin). A normal permission, no prompt. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />

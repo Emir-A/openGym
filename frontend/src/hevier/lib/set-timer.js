@@ -1,0 +1,87 @@
+// Hevy's count-up timer on a cardio set and on a timed hold (hevier/DECISIONS.md D53). ▶ stamps
+// the set with when it started (`hvRun`, ms, a fork-only field of the running session); the row
+// counts up from it, so it keeps counting in the background and across a restart; ■ (or ticking
+// the set, or Finish) writes the time into upstream's own field and drops the stamp. One timer runs
+// at a time. Time goes where upstream keeps it: a cardio set's minutes (`min`, seconds / 60, so
+// 12:34 is 12.5666… min) and a hold's seconds (`sec`).
+import { modeOf } from '../../lib/history.js'
+
+export const RUN = 'hvRun'
+// A hold started on the big clock (D89) counts down to its seconds: the goal, also a fork-only
+// field of the running set, which a stop removes. The hold ends there on its own (hold-clock-run.js).
+export const GOAL = 'hvGoal'
+// The seconds a set counted on from (a time already on it when ▶ was tapped), dropped by a stop.
+export const FROM = 'hvFrom'
+
+/** A set's time in seconds, in `mode` ('cardio' or 'time'), or null when it has none. */
+export function secOf(s, mode) {
+  const v = mode === 'cardio' ? s?.min : s?.sec
+  if (v == null || v === '') return null
+  return mode === 'cardio' ? Math.round(Number(v) * 60) || 0 : Math.round(Number(v)) || 0
+}
+
+/** The value of the set's field for `sec` seconds: cardio's minutes, a hold's seconds. */
+export const fieldValue = (mode, sec) => (mode === 'cardio' ? sec / 60 : Math.round(sec))
+export const fieldOf = mode => (mode === 'cardio' ? 'min' : 'sec')
+
+/** Seconds a running set has counted at `now`, or null when it is not running. */
+export const runningSec = (s, now = Date.now()) => (s?.[RUN] ? Math.max(0, Math.floor((now - s[RUN]) / 1000)) : null)
+
+/** Seconds a running set has counted since its ▶, without the time it counted on from; null when not running. */
+export const sinceStart = (s, now = Date.now()) => (s?.[RUN] ? Math.max(0, runningSec(s, now) - (s[FROM] || 0)) : null)
+
+/** The set stopped at `now`, its time written in (no more than its goal); a set not running is returned as it is. */
+export function stopped(s, mode, now = Date.now()) {
+  if (!s?.[RUN]) return s
+  const { [RUN]: _, [GOAL]: goal, [FROM]: __, ...rest } = s
+  const sec = goal > 0 ? Math.min(goal, runningSec(s, now)) : runningSec(s, now)
+  return { ...rest, [fieldOf(mode)]: fieldValue(mode, sec) }
+}
+
+/** The rows of `after` whose timer `before` had running and that are stopped now (none when rows
+ *  were added or removed, which renumbers them). */
+export const stoppedRows = (before, after) => (before?.length === after?.length
+  ? after.flatMap((s, i) => (before[i]?.[RUN] && !s?.[RUN] ? [i] : []))
+  : [])
+
+/** Seconds left of a running set's goal at `now`, or null when it has none. */
+export const goalLeft = (s, now = Date.now()) => (s?.[RUN] && s[GOAL] > 0 ? s[GOAL] - runningSec(s, now) : null)
+
+/** The running sets of the session whose goal is reached at `now`: [entry, set] pairs. */
+export function dueGoals(active, now = Date.now()) {
+  const out = []
+  ;(active?.entries || []).forEach((e, ei) => (e?.sets || []).forEach((s, si) => {
+    const left = goalLeft(s, now)
+    if (left != null && left <= 0) out.push([ei, si])
+  }))
+  return out
+}
+
+const entryMode = e => modeOf({ ...(e?.target || {}), id: e?.id })
+
+/** Stops every running set of the session `active` in place. */
+export function stopAll(active, now = Date.now()) {
+  for (const e of active?.entries || []) (e?.sets || []).forEach((s, si) => {
+    if (s?.[RUN]) e.sets[si] = stopped(s, entryMode(e), now)
+  })
+}
+
+/** Starts set `si` of entry `ei` at `now`, stopping any other first (in place); a `goal` in seconds
+ *  counts it down; `from` seconds already on the set (a typed time) count on from there. */
+export function startRun(active, ei, si, now = Date.now(), goal = 0, from = 0) {
+  stopAll(active, now)
+  const s = active?.entries?.[ei]?.sets?.[si]
+  if (!s || s.done) return
+  s[RUN] = now - Math.max(0, from) * 1000
+  if (from > 0) s[FROM] = Math.round(from); else delete s[FROM]
+  if (goal > 0) s[GOAL] = Math.round(goal); else delete s[GOAL]
+}
+
+/** Moves a running set's goal by `by` seconds (in place), never below the time already held. */
+export function moveGoal(s, by, now = Date.now()) {
+  if (!(s?.[RUN] && s[GOAL] > 0)) return
+  s[GOAL] = Math.max(runningSec(s, now), s[GOAL] + by)
+}
+
+/** Whether a running set is anywhere in the session. */
+export const anyRunning = active => (active?.entries || []).some(e => (e?.sets || []).some(s => s?.[RUN]))
