@@ -37,7 +37,7 @@ export function liftRows(S) {
     const last = bestSetFor({ workouts: [x.w] }, id, mode, as)?.set || null
     const best = bestSetFor({ workouts: x.ws }, id, mode, as)?.set || null
     const newBest = workoutRecords(S, x.w).some(r => x.w.entries[r.i]?.id === id)
-    rows.push({ id, d: workoutDay(x.w), at: x.at, mode, target: x.e.target || null, last, best, newBest })
+    rows.push({ id, d: workoutDay(x.w), at: x.at, sessions: x.ws.length, mode, target: x.e.target || null, last, best, newBest })
   }
   return rows.sort((a, b) => b.at - a.at || String(a.id).localeCompare(String(b.id)))
 }

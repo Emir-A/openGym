@@ -187,12 +187,27 @@ export default function Lifts({ embed = false, onPick } = {}) {
   const by = liftsBy(S)
   const log = fieldSig(S, 'workouts')
   // Records are part of a row, so the list follows the log and what decides a record (records.js's key).
-  const rows = useMemo(() => liftRows(S), [log, fieldSig(S, 'hvModuleParts'), fieldSig(S, 'modules')]) // eslint-disable-line react-hooks/exhaustive-deps
+  const allRows = useMemo(() => liftRows(S), [log, fieldSig(S, 'hvModuleParts'), fieldSig(S, 'modules')]) // eslint-disable-line react-hooks/exhaustive-deps
+  // In embedded Stats view, keep the list focused on lifts trained in the last 30 days (with >= 2 sessions)
+  // so one-off or older exercises don't crowd the card; typing a search still scans all logged lifts.
+  const rows = useMemo(() => {
+    if (!embed || q.trim()) return allRows
+    const lastMonth = allRows.filter(r => r.d && dayNo(today) - dayNo(r.d) <= 30)
+    const active = lastMonth.filter(r => (r.sessions || 0) >= 2)
+    return active.length ? active : (lastMonth.length ? lastMonth : allRows)
+  }, [allRows, embed, q, today])
   const phase = useMemo(() => (partOn(S, 'integrations', 'openbite') ? currentPhase(S) : null), [log, fieldSig(S, 'hvModuleParts'), fieldSig(S, 'modules')]) // eslint-disable-line react-hooks/exhaustive-deps
   // A stored Phase reads as 12 weeks while there is no phase to show.
   const win = liftsWindow(S) === 'phase' && !phase ? '12w' : liftsWindow(S)
   const from = windowFrom(S, win, today)
-  const progress = useMemo(() => liftProgress(S, { from }), [log, fieldSig(S, 'routines'), from]) // eslint-disable-line react-hooks/exhaustive-deps
+  const allProgress = useMemo(() => liftProgress(S, { from }), [log, fieldSig(S, 'routines'), from]) // eslint-disable-line react-hooks/exhaustive-deps
+  const progress = useMemo(() => {
+    if (!embed) return allProgress
+    const keepIds = new Set(rows.map(r => r.id))
+    const m = new Map()
+    for (const [k, v] of allProgress) if (keepIds.has(k)) m.set(k, v)
+    return m
+  }, [allProgress, embed, rows])
   const totals = progressTotals(progress)
   // By name, and by the brand it was logged on (D36), as the picker searches.
   const trained = rows.map(r => exOr(r.id))
@@ -229,13 +244,14 @@ export default function Lifts({ embed = false, onPick } = {}) {
       {hint && <div className="small dim hv-lifts-hint">{hint}</div>}
     </>}
     {sections.map(sec => <section key={sec.key}>
-      {by === 'muscle' ? <GroupHead label={muscleText(sec.label)} ids={sec.ids} progress={progress} /> : <h2 className="sec">{t(sec.label)}</h2>}
+      {by === 'muscle' ? <GroupHead label={muscleText(sec.label)} ids={sec.ids} progress={progress} /> : <h2 className="sec">{t(embed && !q.trim() ? 'Trained this month' : sec.label)}</h2>}
       <div className="list hv-flat">{sec.rows.map(r => <LiftRow key={r.id} r={r} S={S} today={today} p={progress.get(r.id)} win={win}
         half={by === 'muscle' && !isCompound(exOr(r.id))} onPick={onPick} />)}</div>
     </section>)}
     {!rows.length && <div className="empty"><div className="ico"><Icon name="dumbbell" /></div>{t('No exercises trained yet. They show here after your first workout.')}</div>}
     {rows.length > 0 && !sections.length && q.trim() && <div className="muted small hv-lifts-none">{t('No exercise you trained matches “{0}”.', q.trim())}</div>}
     <div className="hv-lifts-ends">
+      {embed && allRows.length > 0 && <button type="button" className="hv-link hv-lifts-link hv-lifts-full" onClick={() => nav('/lifts')}>{t('All {0} lifts', allRows.length)}<Icon name="chevronRight" /></button>}
       {ends.map(([label, to]) => <button key={to} type="button" className="hv-link hv-lifts-link" onClick={() => nav(to)}>{t(label)}<Icon name="chevronRight" /></button>)}
       <button type="button" className="hv-link hv-lifts-link hv-lifts-all" onClick={() => nav('/library')}>{t('All exercises · Create')}<Icon name="chevronRight" /></button>
     </div>
