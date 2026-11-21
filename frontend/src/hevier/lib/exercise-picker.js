@@ -1,0 +1,100 @@
+// The Hevy Add Exercise picker's list (reference/SCREENS.md §8): one search,
+// an equipment and a muscle filter, Recent Exercises on top. The search and the ranking are
+// upstream's (lib/exercises.js searchExercises, lib/favourites.js); this only decides which
+// exercises a filter keeps and what the muscle filter calls them.
+
+// The muscle an exercise is filed under is D74's main muscle (hevier/lib/main-muscle.js), under
+// Hevy's names; these names are the filter's keys and its English text.
+import { muscleGroupIdOf, groupOfName } from './muscle-groups.js'
+import { mainMuscleOf } from './main-muscle.js'
+
+/** The muscle an exercise is filed under, '' when it has no target. */
+export const muscleOf = mainMuscleOf
+
+/** Whether exercise `ex` falls under the muscle filter `v`: '' any, a muscle, or a whole group (D64). */
+export function muscleMatches(v, ex) {
+  if (!v) return true
+  const g = muscleGroupIdOf(v)
+  const name = muscleOf(ex)
+  if (g) return !!name && groupOfName(name) === g
+  return name === v
+}
+
+/** The muscle filter's options: every muscle `list` has an exercise for, A to Z. */
+export const muscleOptions = list => [...new Set(list.map(muscleOf).filter(Boolean))].sort()
+
+/** The last `n` distinct exercises logged, newest first (upstream keeps `S.workouts` oldest first). */
+export function recentIds(S, n = 10) {
+  const out = []
+  const ws = S?.workouts || []
+  for (let i = ws.length - 1; i >= 0 && out.length < n; i--) {
+    for (const e of ws[i].entries || []) {
+      if (!out.includes(e.id)) out.push(e.id)
+      if (out.length >= n) break
+    }
+  }
+  return out
+}
+
+/**
+ * What the filters keep: a muscle ('' = all), an equipment ('' = all) and `avail`, the active
+ * equipment profile's test (null = show everything).
+ */
+export const filterPicker = (list, { muscle = '', eq = '', avail = null } = {}) => list.filter(e =>
+  muscleMatches(muscle, e) && (!eq || e.eq === eq) && (!avail || avail(e)))
+
+/**
+ * What a gym filter hid from a search (D67): the matches of `q`, kept by the muscle filter, that
+ * `avail` (the gym's test) leaves out. None with no gym or nothing typed. `search` is upstream's.
+ */
+export function hiddenByGym(list, { muscle = '', avail = null } = {}, q, search) {
+  if (!avail || !q?.trim()) return []
+  return search(filterPicker(list, { muscle }).filter(e => !avail(e)), q)
+}
+
+/**
+ * Where the exercises just added sit, for "Add superset": the index of the first, when the
+ * `ids.length` items ending at `end` are those exercises in that order; else -1, and nothing is
+ * linked (the caller placed them some other way).
+ */
+export function addedRun(items, end, ids) {
+  const first = end - ids.length + 1
+  if (ids.length < 2 || first < 0 || end >= (items?.length || 0)) return -1
+  return ids.every((id, k) => items[first + k]?.id === id) ? first : -1
+}
+
+// D36 (hevier/DECISIONS.md): the brand labels of machine exercises (D28) are searchable. "Life Fitness", "lifefitness"
+// and "life fit" all reach a leg press labelled Life Fitness; words that are not part of a brand
+// then narrow by the exercise's name with upstream's search, so "life fitness press" keeps the
+// presses. Two letters at least make a brand word, so a stray "a" does not match every brand.
+const norm = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[^\p{L}\p{N}]+/gu, '')
+
+/** `{ [exId]: [brand, …] }`: every brand an exercise carries, as a default or on a logged set. */
+export function brandsByExercise(S) {
+  const out = {}
+  const add = (id, b) => { if (id && b && !(out[id] ||= []).includes(b)) out[id].push(b) }
+  for (const [id, byGym] of Object.entries(S?.hvMachines || {})) for (const b of Object.values(byGym || {})) add(id, b)
+  for (const w of S?.workouts || []) for (const e of w?.entries || []) add(e?.id, e?.hvBrand)
+  return out
+}
+
+/**
+ * The exercises of `list` a query reaches through a brand, in `list`'s order, with the brand that
+ * matched: `[{ ex, brand }]`. `search(list, q)` is upstream's name search, for the other words.
+ */
+export function brandMatches(list, brands, q, search) {
+  const words = String(q || '').trim().split(/\s+/).map(norm).filter(Boolean)
+  const whole = norm(q)
+  if (whole.length < 2) return []
+  const out = []
+  for (const ex of list) {
+    for (const brand of brands[ex.id] || []) {
+      const b = norm(brand)
+      if (b.includes(whole)) { out.push({ ex, brand }); break }
+      const rest = words.filter(w => w.length < 2 || !b.includes(w))
+      if (rest.length === words.length) continue
+      if (!rest.length || search([ex], rest.join(' ')).length) { out.push({ ex, brand }); break }
+    }
+  }
+  return out
+}

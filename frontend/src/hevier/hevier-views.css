@@ -1,0 +1,89 @@
+/* Styles ported from openGym-Hevier for Lifts and History views, using openGym's light & dark theme tokens. */
+
+:root {
+  --hv-acc-ink: var(--acc-ink);
+  --hv-record: var(--gold-ink, var(--yellow));
+  --hv-fail: var(--red);
+  --hv-card-line: inset 0 0 0 1px var(--sep);
+}
+
+/* ---------- Shared helpers ---------- */
+.hv-link { color: var(--hv-acc-ink); background: none; padding: 0; font-size: 13px; border: 0; font: inherit; }
+.hv-cap { display: block; font-size: var(--fs-footnote); font-weight: 400; letter-spacing: -.004em; text-transform: none; color: var(--label-2); }
+.hv-pr { display: inline-flex; align-items: center; gap: 4px; color: var(--hv-record); }
+
+.hv-thumb { flex: none; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #fff; padding: 0; }
+.hv-thumb :is(img, .thumb) { width: 100%; height: 100%; object-fit: cover; }
+.hv-thumb.sm { width: 32px; height: 32px; display: inline-block; }
+
+.list.hv-flat { gap: 0; }
+.list.hv-flat > .item { background: none; border-radius: 0; padding-inline: 0; }
+.list.hv-flat > .item + .item { border-top: var(--hair) solid var(--sep); }
+.list.hv-flat > .item:active { background: var(--surface); }
+
+/* ---------- PageBar ---------- */
+.hv-pagebar {
+  position: sticky; top: 0; z-index: 20; display: grid; align-items: center; column-gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content) minmax(0, 1fr); min-height: 44px;
+  margin: calc(-1 * (var(--sat) + var(--conn) + 8px)) calc(-1 * var(--pad)) 12px;
+  padding: calc(var(--sat) + var(--conn) + 4px) calc(var(--pad) - 8px) 4px;
+  background: var(--bg); border-bottom: var(--hair) solid var(--sep);
+}
+.hv-pagebar .hv-title { text-align: center; font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.hv-pb-side { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.hv-pb-side.end { justify-content: flex-end; }
+.hv-pagebar .iconbtn { background: none; color: var(--label); min-width: 44px; min-height: 44px; }
+.hv-pb-back .icn { font-size: 22px; --icon-stroke: 2.2; }
+.hv-pagebar .hv-link { flex: 0 1 auto; min-width: 0; min-height: 44px; padding: 0 8px; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(.hv-lifts, .hv-history) .iconbtn { background: none; }
+:is(.hv-lifts, .hv-history) :is(h2, h3).sec { font-size: var(--fs-footnote); font-weight: 400; letter-spacing: -.004em; color: var(--label-2); text-transform: none; margin: 22px 0 8px; padding: 0; }
+
+/* ---------- Chips ---------- */
+.hv-chips { display: flex; gap: 8px; margin-top: 10px; }
+.hv-chip { padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--surface-2); color: var(--label); border: 0; }
+.hv-chip.on { background: var(--acc); color: var(--on-acc); }
+
+/* ---------- Lifts (/lifts) ---------- */
+.hv-lifts .picker-search { position: static; background: none; padding-bottom: 0; }
+.hv-lifts-ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.hv-lifts-ctl > .seg { flex: 1 1 0; min-width: fit-content; }
+:is(.hv-lifts-by, .hv-lifts-win) button { min-height: 48px; }
+.hv-lifts-phase { margin-top: 8px; }
+.hv-lifts-totals { display: flex; gap: 8px; margin-top: 10px; }
+.hv-lifts-total { flex: 1; min-width: 0; min-height: 48px; display: flex; flex-direction: column; align-items: flex-start; padding: 10px 12px; border-radius: var(--r, 20px); background: var(--surface-2); color: var(--label); font: inherit; text-align: start; border: 0; }
+.hv-lifts-total b { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.hv-lifts-total small { font-size: 12px; font-weight: 700; color: var(--label-2); overflow-wrap: anywhere; }
+.hv-lifts-total.rising b { color: var(--hv-acc-ink); }
+.hv-lifts-total.falling b { color: var(--hv-fail); }
+.hv-lifts-total.on { background: var(--surface-3); box-shadow: inset 0 0 0 1.5px var(--label); }
+.hv-lifts-total.rising.on { box-shadow: inset 0 0 0 1.5px var(--acc); }
+.hv-lifts-total.falling.on { box-shadow: inset 0 0 0 1.5px var(--hv-fail); }
+.hv-lifts-hint { margin-top: 6px; }
+h2.sec.hv-lifts-gh { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; row-gap: 2px; font-size: 16px; font-weight: 800; color: var(--label); }
+.hv-lifts-gh b { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.hv-lifts-gh .hv-lift-ch { font-size: 14px; }
+.hv-lifts-gh small { font-size: 12px; font-weight: 700; color: var(--label-2); }
+.hv-lift-half { flex: none; font-size: 11px; font-weight: 800; color: var(--label-2); border: 1px solid var(--sep); border-radius: 99px; padding: 0 6px; }
+.hv-lift { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; text-align: start; color: var(--label); font: inherit; border: 0; }
+.hv-lift .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hv-lift-hd { display: flex; align-items: flex-start; gap: 8px; }
+.hv-lift-nm { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; }
+.hv-lift .ss { font-size: 13px; color: var(--label-2); }
+.hv-lift-nm .ss { flex-basis: 100%; }
+.hv-lift-ch { flex: none; white-space: nowrap; font-size: 13px; font-weight: 800; color: var(--label-2); font-variant-numeric: tabular-nums; }
+.hv-lift-ch.rising { color: var(--hv-acc-ink); }
+.hv-lift-ch.falling { color: var(--hv-fail); }
+.hv-lift-mid { display: flex; align-items: center; gap: 8px; }
+.hv-lift-scale { flex: none; align-self: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 32px; font-size: 11px; font-weight: 700; line-height: 1.1; color: var(--label-2); text-align: end; font-variant-numeric: tabular-nums; }
+.hv-lift-scale.flat { justify-content: center; }
+.hv-lift-chart { flex: 1; min-width: 64px; height: 32px; overflow: visible; }
+.hv-lift-grid { stroke: var(--sep); stroke-width: 1; }
+.hv-lift-mid .hv-lift-r { flex: none; max-width: 45%; }
+.hv-lift-legend { display: flex; flex-wrap: wrap; column-gap: 12px; font-size: 12px; color: var(--label-2); }
+.hv-lift-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: 3px; margin-inline-end: 5px; }
+.hv-lift-r { white-space: pre-line; display: flex; flex-direction: column; align-items: flex-end; text-align: end; max-width: 55%; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.hv-lift-r small { font-size: 12px; color: var(--label-2); }
+.hv-lift-r small.hv-pr { display: inline-flex; align-items: center; gap: 3px; color: var(--hv-record); font-weight: 800; }
+.hv-lifts-none { margin-top: 12px; }
+.hv-lifts-ends { display: flex; flex-direction: column; align-items: flex-start; margin-top: 8px; }
+.hv-lifts-link { display: inline-flex; align-items: center; gap: 2px; min-height: 48px; font-size: 14px; font-weight: 700; }
