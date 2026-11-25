@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildSessionEntries, plannedConfigOf, builtOutOfProgression } from './session-start.js'
-import { readSession } from './progression.js'
+import { cascadeWeight } from './history.js'
+import { applyPrescription, readSession } from './progression.js'
 import { isWarmupRow } from './workout-model.js'
 
 // The session builder used by the live start and by "log a past workout".
@@ -219,5 +220,78 @@ describe('builtOutOfProgression', () => {
     expect(builtOutOfProgression({ noProg: true }, null)).toBe(false)
     expect(builtOutOfProgression({ rid: 'd' }, deload)).toBe(false)
     expect(builtOutOfProgression(null, deload)).toBe(false)
+  })
+})
+
+describe('per-set last-session weight memory', () => {
+  const cfg = { id: '0025', sets: 3, reps: 10, weight: 60, inc: 2.5 }
+  const makeState = (sets, extra = {}) => ({
+    unit: 'kg', exWeights: {}, routines: [], ...extra,
+    workouts: [{ d: '2026-01-01', routineIds: ['r'], entries: [{ id: '0025', target: { ...cfg }, sets }] }],
+  })
+
+  it('keeps [50, 60, 55] on hold instead of flattening all sets to 60', () => {
+    const st = makeState([
+      { w: 50, r: 9, done: true },
+      { w: 60, r: 6, done: true },
+      { w: 55, r: 8, done: true },
+    ])
+    const entry = buildSessionEntries(st, { id: 'r', prog: 'linear', ex: [cfg] })[0]
+    expect(entry.sets.map(s => s.w)).toEqual([50, 60, 55])
+  })
+
+  it('steps each set proportionally when linear progression goes up', () => {
+    const st = makeState([
+      { w: 50, r: 10, done: true },
+      { w: 60, r: 10, done: true },
+      { w: 55, r: 10, done: true },
+    ])
+    const entry = buildSessionEntries(st, { id: 'r', prog: 'linear', ex: [cfg] })[0]
+    expect(entry.sets.map(s => s.w)).toEqual([52.5, 62.5, 57.5])
+  })
+
+  it('scales each set proportionally on deload', () => {
+    const base = [{ w: 50, r: 10, done: false }, { w: 60, r: 10, done: false }, { w: 55, r: 10, done: false }]
+    const out = applyPrescription(base, { policy: 'linear', kind: 'deload', weight: 54, reps: 10 }, 2.5)
+    expect(out.map(s => s.w)).toEqual([45, 55, 50])
+  })
+
+  it('keeps [50, 60, 55] when progression is off and startFrom is last', () => {
+    const st = makeState([
+      { w: 50, r: 9, done: true },
+      { w: 60, r: 6, done: true },
+      { w: 55, r: 8, done: true },
+    ], { startFrom: 'last' })
+    const entry = buildSessionEntries(st, { id: 'r', prog: 'off', ex: [cfg] })[0]
+    expect(entry.sets.map(s => s.w)).toEqual([50, 60, 55])
+  })
+
+  it('preserves varying sets [50, 60, 55] when editing set 1, including clearing then retyping', () => {
+    const st = makeState([
+      { w: 50, r: 9, done: true },
+      { w: 60, r: 6, done: true },
+      { w: 55, r: 8, done: true },
+    ])
+    const entry = buildSessionEntries(st, { id: 'r', prog: 'linear', ex: [cfg] })[0]
+    const afterEdit = cascadeWeight(entry.sets, 0, 52.5, undefined, 0, { prevWeight: 50 })
+    expect(afterEdit.map(s => s.w)).toEqual([50, 60, 55])
+
+    // Clearing set 1 (50 -> null) and retyping 52.5 (undefined -> 52.5) still leaves sets 2 & 3 alone.
+    const cleared = cascadeWeight(entry.sets, 0, null, undefined, 0, { prevWeight: 50 })
+    expect(cleared.map(s => s.w)).toEqual([50, 60, 55])
+    const retyped = cascadeWeight(cleared, 0, 52.5, undefined, 0, { prevWeight: undefined })
+    expect(retyped.map(s => s.w)).toEqual([50, 60, 55])
+  })
+
+  it('keeps uniform straight sets [60, 60, 60] cascading as before', () => {
+    const st = makeState([
+      { w: 60, r: 9, done: true },
+      { w: 60, r: 9, done: true },
+      { w: 60, r: 9, done: true },
+    ])
+    const entry = buildSessionEntries(st, { id: 'r', prog: 'linear', ex: [cfg] })[0]
+    expect(entry.sets.map(s => s.w)).toEqual([60, 60, 60])
+    const cascaded = cascadeWeight(entry.sets, 0, 62.5, undefined, 0, { prevWeight: 60 })
+    expect(cascaded.map(s => s.w)).toEqual([60, 62.5, 62.5])
   })
 })

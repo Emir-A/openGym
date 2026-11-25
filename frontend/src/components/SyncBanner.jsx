@@ -75,9 +75,13 @@ export default function SyncBanner() {
   const local = useStore(s => showsLocalLine(s.S))
   const update = useStore(s => s.update)
   const conn = useConnection()
+  const [dismissed, setDismissed] = useState(false)
+  useEffect(() => {
+    if (!conn.show) setDismissed(false)
+  }, [conn.show])
   const { view, user, status } = conn
   const quiet = view?.tone === 'quiet'
-  const show = conn.show && on && (!quiet || local)
+  const show = conn.show && on && (quiet ? local : !dismissed)
   const row = useRef(null)
 
   useLayoutEffect(() => {
@@ -106,11 +110,12 @@ export default function SyncBanner() {
     <span className="conn-t">{view.banner}</span>
     {act && label && <span className="conn-a">{label}</span>}
   </>
+  const dismiss = () => (quiet ? update(s => { s.connLocal = false }) : setDismissed(true))
   return <div className={'conn-bar ' + view.tone}>
     <div className="conn-row" ref={row} role="status" aria-live="polite">
       {act ? <button className="conn" onClick={act}>{inner}</button> : <div className="conn">{inner}</div>}
-      {/* Connecting or signing in is still in Settings, so hiding the line takes nothing away. */}
-      {quiet && <button type="button" className="conn-x" aria-label={t('Close')} onClick={() => update(s => { s.connLocal = false })}><Icon name="xmark" /></button>}
+      {/* Beside the banner, never inside its action button, so hiding it never also triggers retry/connect. */}
+      <button type="button" className="conn-x" aria-label={t('Close')} onClick={dismiss}><Icon name="xmark" /></button>
     </div>
   </div>
 }

@@ -976,6 +976,32 @@ function undulatingPrescription(S, cfg, { policy, inc, unit, owned, assisted }) 
 export function applyPrescription(sets, p, step = 2.5, floor = 0, assisted = false) {
   // A first session has nothing to prescribe from, except triple progression's start of a cycle.
   if (!p || p.kind === 'off' || (p.kind === 'first' && !p.rowReps)) return sets
+  // When open work rows already carry varying positive weights (e.g. 50 / 60 / 55 from last
+  // session), preserve that per-set profile across hold/up/deload instead of flattening every
+  // set to a single top weight. Undulating computes a fresh day-specific intensity target.
+  const openWeights = []
+  if (p.weight != null && p.policy !== 'undulating') {
+    for (const s of sets) {
+      if (s.done || isWarmupRow(s)) continue
+      if (isSideSet(s)) {
+        for (const k of ['L', 'R']) {
+          if (!s.sides[k].done && s.sides[k].w > 0) openWeights.push(s.sides[k].w)
+        }
+      } else if (s.w > 0) {
+        openWeights.push(s.w)
+      }
+    }
+  }
+  const preservePerSet = new Set(openWeights).size > 1
+  const refWeight = preservePerSet ? (assisted ? Math.min(...openWeights) : Math.max(...openWeights)) : 0
+  const weightFor = curW => {
+    if (!preservePerSet || !(curW > 0)) return p.weight
+    if (p.kind === 'deload' || p.kind === 'deloadweek') {
+      return refWeight > 0 ? snapWeight(curW * (p.weight / refWeight), step) : p.weight
+    }
+    if (p.kind === 'up') return addStep(curW, p.weight - refWeight, step)
+    return curW
+  }
   const out = sets.map(s => {
     // Never rewrite a logged set (a ticked warm-up falling through here would be the data-loss
     // the cascade fix removed, two files over). The prescription speaks to the work rows; an
@@ -991,14 +1017,14 @@ export function applyPrescription(sets, p, step = 2.5, floor = 0, assisted = fal
       const sides = Object.fromEntries(['L', 'R'].map(side => {
         const row = s.sides[side]
         return [side, row.done ? row : { ...row,
-          ...(p.weight != null ? { w: p.weight } : {}),
+          ...(p.weight != null ? { w: weightFor(row.w) } : {}),
           ...(p.reps != null ? { r: p.reps / 2 } : {}),
         }]
       }))
       return syncSideAggregate({ ...s, sides })
     }
     const o = { ...s }
-    if (p.weight != null) o.w = p.weight
+    if (p.weight != null) o.w = weightFor(s.w)
     if (p.reps != null) o.r = p.reps
     if (p.sec != null) o.sec = p.sec
     return o
@@ -1019,7 +1045,7 @@ export function applyPrescription(sets, p, step = 2.5, floor = 0, assisted = fal
     const { drops, clusters, ...plainSeed } = seed
     while (out.filter(s => !isWarmupRow(s)).length < p.sets) {
       out.push(isSideSet(seed) ? makeSideSet({
-        w: p.weight ?? seed.w, r: p.reps ?? seed.r,
+        w: preservePerSet ? seed.w : (p.weight ?? seed.w), r: p.reps ?? seed.r,
       }) : { ...plainSeed, done: false })
     }
   }

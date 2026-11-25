@@ -292,14 +292,38 @@ describe('hiding the no-server line', () => {
     expect(bar()).not.toBeNull()
   })
 
-  it('hidden, a problem with a server still shows, and has no × of its own', () => {
+  it('hidden, a problem with a server still shows, and has its own ×', () => {
     mocks.S = { connLocal: false }
     for (const [st, extra] of [['offline', { pending: true }], ['error', { lastError: { status: 502 } }], ['auth', {}], ['held', {}]]) {
       mocks.sync = sync(st, extra)
       render()
       expect(bar(), st).not.toBeNull()
-      expect(close(), st).toBeNull()
+      expect(close(), st).not.toBeNull()
     }
+  })
+
+  it('dismissing an offline/error banner hides it, clears --conn, and does not trigger sync', () => {
+    mocks.sync = sync('offline', { pending: true })
+    render()
+    expect(bar()).not.toBeNull()
+    expect(conn()).not.toBe('')
+    act(() => { close().click() })
+    expect(bar()).toBeNull()
+    expect(conn()).toBe('')
+    expect(mocks.syncNow).not.toHaveBeenCalled()
+  })
+
+  it('a dismissed offline banner shows again after reconnecting and going offline again', () => {
+    mocks.sync = sync('offline', { pending: true })
+    render()
+    act(() => { close().click() })
+    expect(bar()).toBeNull()
+    mocks.sync = sync('ok')
+    render()
+    expect(bar()).toBeNull()
+    mocks.sync = sync('offline', { pending: true })
+    render()
+    expect(bar()).not.toBeNull()
   })
 })
 

@@ -1145,12 +1145,15 @@ export { streakWeeks } from './streak.js'
  * one more step below the edited one rather than at the same load, so 26 → 27.5 on the top set
  * makes the back-off sets 25.5 and 23.5, not 27.5 three times.
  */
-export function cascadeWeight(rows, from, value, side, backoffStep = 0) {
+export function cascadeWeight(rows, from, value, side, backoffStep = 0, options = null) {
   const source = rows[from]
   if (!source || isWarmupRow(source)) return rows.slice()
   const sides = isSideSet(source) ? (side ? [side] : ['L', 'R']) : null
   const next = rows.slice()
   const stepDown = backoffStep > 0 && value != null
+  const hasPrev = !!options && Object.prototype.hasOwnProperty.call(options, 'prevWeight')
+  const prevWeight = hasPrev ? options.prevWeight : undefined
+  const keepDistinct = !(backoffStep > 0) && hasPrev
   let k = 0
   const setWeight = row => {
     const out = { ...row }
@@ -1161,6 +1164,7 @@ export function cascadeWeight(rows, from, value, side, backoffStep = 0) {
   const setSideWeight = (row, key) => {
     const current = row.sides?.[key]
     if (!current || current.done === true || current.weightOrigin === WEIGHT_ORIGIN_MANUAL) return row
+    if (keepDistinct && current.w > 0 && current.w !== prevWeight) return row
     const nextSide = setWeight(current)
     return syncSideAggregate({ ...row, sides: { ...row.sides, [key]: nextSide } })
   }
@@ -1176,6 +1180,7 @@ export function cascadeWeight(rows, from, value, side, backoffStep = 0) {
       for (const key of sides) out = setSideWeight(out, key)
       next[j] = out
     } else if (!isSideSet(row) && !row.done && row.weightOrigin !== WEIGHT_ORIGIN_MANUAL) {
+      if (keepDistinct && row.w > 0 && row.w !== prevWeight) continue
       next[j] = setWeight(row)
     }
   }

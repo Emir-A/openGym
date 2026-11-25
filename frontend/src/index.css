@@ -368,9 +368,9 @@ body.no-tabbar.resting #app{padding-bottom:calc(96px + var(--sab))}
   background:var(--bg);background:color-mix(in srgb,var(--bg) 94%,transparent);
   -webkit-backdrop-filter:saturate(180%) blur(10px);backdrop-filter:saturate(180%) blur(10px);
 }
-.conn-row{max-width:560px;margin:0 auto;padding:6px 0}
+.conn-row{max-width:560px;margin:0 auto;padding:6px 0;display:flex;align-items:center;gap:6px}
 .conn{
-  display:flex;align-items:center;gap:9px;width:100%;text-align:start;min-height:34px;
+  display:flex;align-items:center;gap:9px;flex:1;min-width:0;text-align:start;min-height:34px;
   padding-block:6px;padding-inline:12px 8px;border-radius:var(--r);
   background:linear-gradient(rgba(255,214,10,0.16),rgba(255,214,10,0.16)),var(--surface);background:color-mix(in srgb,var(--yellow) 16%,var(--surface));color:var(--label);font-size:var(--fs-footnote);line-height:1.3;
 }
@@ -390,7 +390,7 @@ button.conn:active{filter:brightness(1.12)}
 :root[data-theme="light"] .conn-bar.quiet .conn-a{color:color-mix(in srgb,var(--acc-ink) 80%,#000)}
 @supports not (color: color-mix(in srgb, red 50%, blue)){:root[data-theme="light"] .conn-bar.quiet .conn-a{color:var(--acc-ink)}}
 /* its × (#454): beside the line, not inside its button, so hiding it never also connects */
-.conn-bar.quiet .conn-row{display:flex;align-items:center;gap:2px}
+.conn-bar.quiet .conn-row{gap:2px}
 .conn-x{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:99px;color:var(--label-3);font-size:var(--fs-caption)}
 .conn-x:active{background:var(--surface-2)}
 :root[data-theme="light"] .conn-bar:not(.quiet) .conn-a{background:var(--surface)}
